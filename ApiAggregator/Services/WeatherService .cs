@@ -1,5 +1,6 @@
 ﻿using ApiAggregator.Models;
 using ApiAggregator.Interfaces;
+using ApiAggregator.Utilities;
 using System.Text.Json;
 using System.Net;
 using System.Net.Http.Headers;
@@ -31,7 +32,7 @@ namespace ApiAggregator.Services
                 var geoLocation = await GetLocationAsync(city);
                 if (geoLocation == null)
                 {
-                    return null;
+                    return new List<WeatherModel>(); // Return an empty list if no location is found
                 }
 
                 // Step 2: Fetch Weather Data for each date in the range
@@ -52,10 +53,10 @@ namespace ApiAggregator.Services
             try
             {
                 var url = $"{_geoUrl}?q={city}";
-
                 _httpClient.DefaultRequestHeaders.Add("x-api-key", _apiKey);
 
-                var response = await _httpClient.GetAsync(url);
+                // Use the Polly retry policy
+                var response = await PollyPolicies.GetRetryPolicy().ExecuteAsync(() => _httpClient.GetAsync(url));
 
                 stopwatch.Stop(); // Stop stopwatch after the response is received
 
@@ -108,7 +109,8 @@ namespace ApiAggregator.Services
 
                     _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
 
-                    var response = await _httpClient.GetAsync(weatherUrl);
+                    // Use the Polly retry policy
+                    var response = await PollyPolicies.GetRetryPolicy().ExecuteAsync(() => _httpClient.GetAsync(weatherUrl));
 
                     stopwatch.Stop(); // Stop stopwatch after the response is received
 
@@ -119,21 +121,6 @@ namespace ApiAggregator.Services
                     {
                         Console.WriteLine($"Weather API call failed for {date:yyyy-MM-dd} with status code: {response.StatusCode}");
                         continue; // Skip to the next date
-                    }
-
-                    if (!response.IsSuccessStatusCode)
-                    {
-                        var errorContent = await response.Content.ReadAsStringAsync();
-                        // Log the error for monitoring
-                        Console.WriteLine($"Weather API call failed for {date:yyyy-MM-dd} with status code: {response.StatusCode}, {errorContent}");
-
-                        // Decide based on status code
-                        if (response.StatusCode == HttpStatusCode.NotFound)
-                        {
-                            continue; // Skip to the next date, API returned no data, but it's not critical
-                        }
-
-                        throw new HttpRequestException($"API call failed: {response.StatusCode}, Details: {errorContent}");
                     }
 
                     var json = await response.Content.ReadAsStringAsync();

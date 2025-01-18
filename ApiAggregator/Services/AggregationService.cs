@@ -6,6 +6,7 @@ using ApiAggregator.Utilities;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 using static ApiAggregator.Models.NewsModel;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 public class AggregationService : IAggregationService
 {
@@ -22,9 +23,11 @@ public class AggregationService : IAggregationService
 
     public async Task<string> GetAggregatedResults(string startDate, string endDate, string keyword, string sortDateBy, string sortNewsBy)
     {
+        List<string> errors = new List<string>();
+
         try
         {
-            // Parse and validate date inputs
+            // Parse and validate dates
             var start = InputValidator.ParseAndValidateDate(startDate, nameof(startDate));
             var end = InputValidator.ParseAndValidateDate(endDate, nameof(endDate));
 
@@ -32,49 +35,53 @@ public class AggregationService : IAggregationService
             InputValidator.ValidateInputs(keyword, sortDateBy, sortNewsBy);
 
             // Fetch data asynchronously from all services
-            var apodTask = _apodService.FetchDataAsync(start, end);
-            var newsTask = _newsService.FetchDataAsync(keyword, start, end, sortNewsBy);
-            var weatherTask = _weatherService.FetchDataAsync(keyword, start, end);
-
-            // Await all tasks simultaneously
-            await Task.WhenAll(apodTask, newsTask, weatherTask);
-
-            // Ensure data is not null and fetch the results
-            var apodData = await apodTask ?? new List<APODModel>();
-            var newsData = await newsTask ?? new NewsModel { Articles = new List<NewsModel.Article>() };
-            var weatherData = await weatherTask ?? new List<WeatherModel>();
-
-            // Aggregate results into a list of AggregatedResponse
-            var aggregatedResults = AggregateResults(start, end, apodData, newsData, weatherData, sortDateBy);
-
-            // Ensure that aggregatedResults is not null or empty, and always return valid JSON
-            if (aggregatedResults == null || !aggregatedResults.Any())
+            var apodTask = Task.Run(async () =>
             {
-                aggregatedResults = new List<AggregatedResponse>(); // Empty list if no valid data
-            }
-
-            // Serialize to JSON for output
-            var finalJson = JsonSerializer.Serialize(aggregatedResults, new JsonSerializerOptions
-            {
-                WriteIndented = true // Optional: Makes the JSON output pretty-printed
+                try { return await _apodService.FetchDataAsync(start, end); }
+                catch { errors.Add("APOD API"); return null; }
             });
 
-            return finalJson;
-        }
-        catch (ApiAggregator.Exceptions.ValidationException ex)
-        {
-            Console.WriteLine($"Validation error: {ex.Message}");
-            throw;
-        }
-        catch (ArgumentException ex)
-        {
-            // Handle validation exceptions
-            return $"Error: {ex.Message}";
+            var newsTask = Task.Run(async () =>
+            {
+                try { return await _newsService.FetchDataAsync(keyword, start, end, sortNewsBy); }
+                catch { errors.Add("News API"); return null; }
+            });
+
+            var weatherTask = Task.Run(async () =>
+            {
+                try { return await _weatherService.FetchDataAsync(keyword, start, end); }
+                catch { errors.Add("Weather API"); return null; }
+            });
+
+            await Task.WhenAll(apodTask, newsTask, weatherTask);
+
+            // Aggregate results
+            var aggregatedResults = AggregateResults(
+                start,
+                end,
+                await apodTask ?? new List<APODModel>(),
+                await newsTask ?? new NewsModel { Articles = new List<NewsModel.Article>() },
+                await weatherTask ?? new List<WeatherModel>(),
+                sortDateBy
+            );
+
+            return JsonSerializer.Serialize(new UnifiedResponse<List<AggregatedResponse>>
+            {
+                Status = errors.Count == 0 ? "success" : (errors.Count < 3 ? "partial_failure" : "failure"),
+                Message = errors.Count == 0
+                ? "Data aggregation successful."
+                : $"Some data sources are unavailable: {string.Join(", ", errors)}.",
+                Data = aggregatedResults
+            }, new JsonSerializerOptions { WriteIndented = true });
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"An error occurred in GetAggregatedResults: {ex.Message}");
-            throw new ServiceUnavailableException("An error occurred while processing your request. Please try again later.");
+            return JsonSerializer.Serialize(new UnifiedResponse<string>
+            {
+                Status = "failure",
+                Message = "An error occurred during data aggregation.",
+                Data = ex.Message
+            });
         }
     }
 

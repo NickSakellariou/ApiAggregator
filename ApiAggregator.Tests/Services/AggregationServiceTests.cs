@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using ApiAggregator.Interfaces;
 using ApiAggregator.Models;
 using ApiAggregator.Services;
+using ApiAggregator.Tests.Models;
 using FluentAssertions;
 using Moq;
 using Xunit;
@@ -100,17 +101,18 @@ namespace ApiAggregator.Tests.Services
             // Act
             var resultJson = await _aggregationService.GetAggregatedResults(startDate, endDate, keyword, sortDateBy, sortNewsBy);
 
-            // Deserialize JSON result
-            var result = JsonSerializer.Deserialize<List<AggregatedResponse>>(resultJson, new JsonSerializerOptions
+            // Deserialize JSON result into AggregatedResponseWrapper
+            var resultWrapper = JsonSerializer.Deserialize<AggregatedResponseWrapper>(resultJson, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
             });
 
             // Assert
-            result.Should().NotBeNull();
-            result.Count.Should().Be(3); // 3 days in the range
+            resultWrapper.Should().NotBeNull();
+            resultWrapper.Data.Should().NotBeNull();
+            resultWrapper.Data.Count.Should().Be(3); // 3 days in the range
 
-            var day2 = result.FirstOrDefault(r => r.Date == parsedStartDate.AddDays(1));
+            var day2 = resultWrapper.Data.FirstOrDefault(r => r.Date == parsedStartDate.AddDays(1));
             day2.Should().NotBeNull();
             day2.Weather.Should().NotBeNull();
             day2.Weather.Max.Should().Be(25);
