@@ -143,16 +143,17 @@ namespace ApiAggregator.Tests.Services
             var resultJson = await _aggregationService.GetAggregatedResults(startDate, endDate, keyword, sortDateBy, sortNewsBy);
 
             // Deserialize the result JSON
-            var result = JsonSerializer.Deserialize<List<AggregatedResponse>>(resultJson, new JsonSerializerOptions
+            var resultWrapper = JsonSerializer.Deserialize<UnifiedResponse<List<AggregatedResponse>>>(resultJson, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
             });
 
             // Assert
-            result.Should().NotBeNull();
-            result.Count.Should().Be(3); // Three days in the range, even if all API responses are null
+            resultWrapper.Should().NotBeNull();
+            resultWrapper.Data.Should().NotBeNull();
+            resultWrapper.Data.Count.Should().Be(3); // Three days in the range, even if all API responses are null
 
-            foreach (var response in result)
+            foreach (var response in resultWrapper.Data)
             {
                 response.Weather.Should().BeNull(); // No weather data
                 response.AstronomyPictureOfTheDay.Should().BeNull(); // No APOD data
