@@ -21,6 +21,20 @@ The **API Aggregation Service** is a .NET-based application that consolidates da
 
 ---
 
+### NuGet Libraries Used
+
+This project leverages several powerful NuGet libraries to enhance its resilience, testing, and functionality:
+
+- **[Polly](https://github.com/App-vNext/Polly)**: A .NET resilience and transient-fault-handling library that supports policies such as Retry, Circuit Breaker, Timeout, Bulkhead Isolation, and Fallback, implemented in a fluent and thread-safe manner.
+
+- **[Moq](https://github.com/moq/moq4)**: A popular and user-friendly mocking framework for .NET, used to create test doubles for unit testing.
+
+- **[xUnit.net](https://xunit.net/)**: A developer testing framework designed to support Test Driven Development (TDD) with simplicity and deep integration with .NET features.
+
+- **[FluentAssertions](https://fluentassertions.com/)**: An extensive set of extension methods that provide expressive and readable ways to specify the expected outcomes of TDD or BDD-style unit tests.
+
+---
+
 ## Endpoints
 
 ### `/aggregate`
