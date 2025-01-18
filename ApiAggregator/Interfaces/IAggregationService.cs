@@ -4,7 +4,7 @@ namespace ApiAggregator.Interfaces
 {
     public interface IAggregationService
     {
-        Task<string> GetAggregatedResults(DateOnly startDate, DateOnly endDate, string keyword, string sortDateBy, string sortNewsBy);
+        Task<string> GetAggregatedResults(string startDate, string endDate, string keyword, string sortDateBy, string sortNewsBy);
 
     }
 }

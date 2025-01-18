@@ -21,8 +21,8 @@ public class ApiAggregationController : ControllerBase
 
     [HttpGet("aggregate")]
     public async Task<IActionResult> GetAggregatedData(
-    [FromQuery] DateOnly startDate,
-    [FromQuery] DateOnly endDate,
+    [FromQuery] string startDate,
+    [FromQuery] string endDate,
     [FromQuery] string keyword,
     [FromQuery] string sortDateBy,
     [FromQuery] string sortNewsBy)
