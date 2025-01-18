@@ -34,11 +34,12 @@ This endpoint aggregates data from all external APIs and combines them into a un
 | `endDate`    | DateOnly | The end date for data aggregation.                          | `2025-01-11`       |
 | `keyword`    | string   | A keyword to filter news articles.                         | `Athens`           |
 | `sortDateBy` | string   | Specifies how to sort the results by date (`asc` or `desc`).| `asc`              |
-| `sortNewsBy` | string   | Specifies how to sort news articles (`relevance`, `popularity`).| `popularity`     |
+| `sortNewsBy` | string   | Specifies how to sort news articles (`relevance`, `popularity`, `publishedAt`).| `publishedAt`     |
 
 #### Notes:
 - Dates must be provided in the `YYYY-MM-DD` format.
 - Ensure all input parameters are valid; otherwise, the API may return an error.
+- If no town is provided in `keyword` then there will be no response for weather.
 
 #### Expected Output Format
 
