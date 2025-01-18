@@ -21,9 +21,12 @@ The **API Aggregation Service** is a .NET-based application that consolidates da
 
 ---
 
-## Input Parameters
+## Endpoints
 
-The API accepts the following query parameters:
+### `/aggregate`
+This endpoint aggregates data from all external APIs and combines them into a unified response.
+
+#### Input Parameters
 
 | Parameter    | Type     | Description                                                | Example Value      |
 |--------------|----------|------------------------------------------------------------|--------------------|
@@ -33,13 +36,11 @@ The API accepts the following query parameters:
 | `sortDateBy` | string   | Specifies how to sort the results by date (`asc` or `desc`).| `asc`              |
 | `sortNewsBy` | string   | Specifies how to sort news articles (`relevance`, `popularity`).| `popularity`     |
 
-### Notes:
+#### Notes:
 - Dates must be provided in the `YYYY-MM-DD` format.
 - Ensure all input parameters are valid; otherwise, the API may return an error.
 
----
-
-## Expected Output Format
+#### Expected Output Format
 
 The API returns a JSON array where each object represents a single date and its aggregated data:
 
@@ -80,7 +81,101 @@ The API returns a JSON array where each object represents a single date and its 
 ]
 ```
 
-## Unit Tests
+### `/statistics`
+
+This endpoint provides performance statistics for API calls and cache lookups.
+
+#### Output Format
+The API returns a JSON array where each object represents statistics for a specific API:
+
+```json
+[
+    {
+        "apiName": "Weather - Location",
+        "totalRequests": 1,
+        "fastRequests": 0,
+        "averageRequests": 0,
+        "slowRequests": 1,
+        "averageResponseTime": 203
+    },
+    {
+        "apiName": "APOD",
+        "totalRequests": 1,
+        "fastRequests": 0,
+        "averageRequests": 0,
+        "slowRequests": 1,
+        "averageResponseTime": 793
+    },
+    {
+        "apiName": "News",
+        "totalRequests": 1,
+        "fastRequests": 0,
+        "averageRequests": 0,
+        "slowRequests": 1,
+        "averageResponseTime": 932
+    },
+    {
+        "apiName": "Weather",
+        "totalRequests": 1,
+        "fastRequests": 0,
+        "averageRequests": 0,
+        "slowRequests": 1,
+        "averageResponseTime": 936
+    },
+    {
+        "apiName": "Cache",
+        "totalRequests": 1,
+        "fastRequests": 1,
+        "averageRequests": 0,
+        "slowRequests": 0,
+        "averageResponseTime": 0
+    }
+]
+```
+
+---
+
+### Web Caching
+
+To optimize performance and reduce redundant API calls, the project uses in-memory caching. The caching mechanism works as follows:
+
+1. **Cache Key Generation**:
+   - A unique cache key is generated based on the query parameters (e.g., `startDate`, `endDate`, `keyword`, `sortDateBy`, `sortNewsBy`).
+
+2. **Cache Lookup**:
+   - Before making an API call, the application checks if the response for the given query already exists in the cache.
+
+3. **Cache Expiry**:
+   - Cached responses are stored for **5 minutes** (absolute expiration).
+   - If no activity occurs during a **2-minute sliding window**, the cache entry is removed.
+
+4. **Thread Safety**:
+   - The caching logic is implemented alongside a **semaphore** to limit concurrent access to the same resource.
+
+---
+
+### Parallelism
+
+To enhance performance and decrease response times, the project utilizes parallelism when fetching data from external APIs. The parallel processing mechanism works as follows:
+
+1. **Concurrent API Calls**:
+   - Requests to the external APIs (OpenWeatherMap, News API, and APOD API) are executed concurrently using asynchronous programming patterns.
+   - This minimizes the total response time by avoiding sequential API calls.
+
+2. **Efficient Task Management**:
+   - The project leverages `Task.WhenAll` to aggregate the results of all API calls, ensuring that each API is queried independently but simultaneously.
+
+3. **Scalability**:
+   - The use of parallelism allows the application to scale efficiently, handling multiple concurrent requests without blocking resources.
+
+4. **Error Handling**:
+   - Each API call is wrapped with proper error handling to ensure that failures in one API do not affect the responses from others.
+
+By combining parallel API calls with efficient caching, the application achieves a significant reduction in response times, making it both fast and robust.
+
+---
+
+### Unit Tests
 
 This project includes a comprehensive suite of unit tests to ensure functionality and reliability:
 
@@ -91,9 +186,9 @@ This project includes a comprehensive suite of unit tests to ensure functionalit
 
 ---
 
-## Running the Project
+### Running the Project
 
-### Clone the Repository
+#### Clone the Repository
 
 To start working with the project, first clone the repository to your local machine:
 
@@ -102,7 +197,7 @@ git clone https://github.com/NickSakellariou/ApiAggregator.git
 cd ApiAggregator
 ```
 
-## Set Up API Keys
+### Set Up API Keys
 
 Before running the project, set up the necessary API keys in the `secrets.json` configuration file. This file contains the details for the external APIs:
 
@@ -129,7 +224,7 @@ Make sure to replace the API keys in the `secrets.json` file with your actual ke
 
 ---
 
-## Build and Run the Project
+### Build and Run the Project
 
 Now, build and run the project using the following commands:
 
@@ -138,7 +233,7 @@ dotnet build
 dotnet run
 ```
 
-## Access the API
+### Access the API
 
 Once the application is running, you can access the API at the following endpoint:
 
@@ -147,3 +242,12 @@ GET https://localhost:7054/api/apiaggregation/aggregate?startDate=2025-01-10&end
 ```
 
 You can modify the query parameters (startDate, endDate, keyword, etc.) based on your needs.
+
+Additionally, you can access the performance statistics for API calls and cache lookups by using the following endpoint:
+
+```http
+GET https://localhost:7054/api/apiaggregation/statistics
+```
+
+This will return statistics related to the total requests, response times, and cache lookups.
+
