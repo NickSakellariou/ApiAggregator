@@ -24,7 +24,6 @@ namespace ApiAggregator.Utilities
         }
 
 
-        // Validate sortDateBy parameter (should be either asc or desc)
         public static void ValidateSortDateBy(string sortDateBy)
         {
             var validSortDateByOptions = new[] { "asc", "desc" };

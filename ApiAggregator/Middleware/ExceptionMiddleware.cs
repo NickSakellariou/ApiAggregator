@@ -17,6 +17,10 @@ namespace ApiAggregator.Middleware
             {
                 await _next(context);
             }
+            catch (ArgumentException ex)
+            {
+                await HandleExceptionAsync(context, ex, 400);
+            }
             catch (ValidationException ex)
             {
                 await HandleExceptionAsync(context, ex, 400);

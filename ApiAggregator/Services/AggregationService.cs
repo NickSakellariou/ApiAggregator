@@ -76,12 +76,7 @@ public class AggregationService : IAggregationService
         }
         catch (Exception ex)
         {
-            return JsonSerializer.Serialize(new UnifiedResponse<string>
-            {
-                Status = "failure",
-                Message = "An error occurred during data aggregation.",
-                Data = ex.Message
-            });
+            throw;
         }
     }
 
