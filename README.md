@@ -80,6 +80,24 @@ The API returns a JSON array where each object represents a single date and its 
 ]
 ```
 
+## Web Caching
+
+To optimize performance and reduce redundant API calls, the project uses in-memory caching. The caching mechanism works as follows:
+
+1. **Cache Key Generation**:
+   - A unique cache key is generated based on the query parameters (e.g., `startDate`, `endDate`, `keyword`, `sortDateBy`, `sortNewsBy`).
+
+2. **Cache Lookup**:
+   - Before making an API call, the application checks if the response for the given query already exists in the cache.
+
+3. **Cache Expiry**:
+   - Cached responses are stored for **5 minutes** (absolute expiration).
+   - If no activity occurs during a **2-minute sliding window**, the cache entry is removed.
+
+4. **Thread Safety**:
+   - The caching logic is implemented alongside a **semaphore** to limit concurrent access to the same resource.
+
+
 ## Unit Tests
 
 This project includes a comprehensive suite of unit tests to ensure functionality and reliability:
