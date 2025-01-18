@@ -46,40 +46,45 @@ This endpoint aggregates data from all external APIs and combines them into a un
 The API returns a JSON array where each object represents a single date and its aggregated data:
 
 ```json
-[
-  {
-    "Date": "2025-01-10",
-    "Weather": {
-      "min": 12.12,
-      "max": 18.18,
-      "afternoon": 17.32,
-      "night": 12.88,
-      "evening": 15.52,
-      "morning": 12.39
-    },
-    "AstronomyPictureOfTheDay": {
-      "copyright": "Long Xin",
-      "date": "2025-01-10",
-      "explanation": "An unassuming region in the constellation Taurus holds these dark and dusty nebulae...",
-      "media_type": "image",
-      "title": "Young Stars, Dark Nebulae",
-      "url": "https://apod.nasa.gov/apod/image/2501/B209V773Tau_1024.png"
-    },
-    "News": {
-      "articles": [
-        {
-          "author": "Joe Hotchkiss, Augusta Chronicle",
-          "title": "Snow, ice shuts down Richmond, Columbia counties. Here's what's closed",
-          "description": "Thinking of driving on icy, slushy roads? Think again.",
-          "url": "https://www.augustachronicle.com/story/weather/2025/01/10/winter-storm...",
-          "publishedAt": "2025-01-10T16:59:03Z"
-        },
-        ...
-      ]
+{
+  "Status": "success",
+  "Message": "Data aggregation successful.",
+  "Data": [
+    {
+      "Date": "2025-01-10",
+      "Weather": {
+        "min": 12.12,
+        "max": 18.18,
+        "afternoon": 17.32,
+        "night": 12.88,
+        "evening": 15.52,
+        "morning": 12.39
+      },
+      "AstronomyPictureOfTheDay": {
+        "copyright": "Long Xin",
+        "date": "2025-01-10",
+        "explanation": "An unassuming region in the constellation Taurus holds these dark and dusty nebulae. Scattered through the scene, stars in multiple star systems are forming within their natal Taurus molecular cloud complex some 450 light-years away. Millions of years young and still going through stellar adolescence, the stars are variable in brightness and in the late phases of their gravitational collapse. Known as T-Tauri class stars they tend to be faint and take on a yellowish hue in the image. One of the brightest T-Tauri stars in Taurus, V773 (aka HD283447) is near the center of the telescopic frame that spans over 1 degree. Toward the top is the dense, dark marking on the sky cataloged as Barnard 209.",
+        "media_type": "image",
+        "title": "Young Stars, Dark Nebulae",
+        "url": "https://apod.nasa.gov/apod/image/2501/B209V773Tau_1024.png"
+      },
+      "News": {
+        "articles": [
+          {
+            "author": "Joe Hotchkiss, Augusta Chronicle",
+            "title": "Snow, ice shuts down Richmond, Columbia counties. Here\u0027s what\u0027s closed",
+            "description": "Thinking of driving on icy, slushy roads? Think again.",
+            "url": "https://www.augustachronicle.com/story/weather/2025/01/10/winter-storm-hits-augusta-area-residents-urged-to-stay-safe-snow-sleet-wintry-mix-ice/77594916007/",
+            "publishedAt": "2025-01-10T16:59:03Z"
+          },
+          ...
+        ]
+      }
     }
-  },
-  ...
-]
+ ...
+  ]
+}
+
 ```
 
 ### `/statistics`
