@@ -44,8 +44,8 @@ This endpoint aggregates data from all external APIs and combines them into a un
 
 | Parameter    | Type     | Description                                                | Example Value      |
 |--------------|----------|------------------------------------------------------------|--------------------|
-| `startDate`  | DateOnly | The start date for data aggregation.                        | `2025-01-10`       |
-| `endDate`    | DateOnly | The end date for data aggregation.                          | `2025-01-11`       |
+| `startDate`  | string | The start date for data aggregation.                        | `2025-01-10`       |
+| `endDate`    | string | The end date for data aggregation.                          | `2025-01-11`       |
 | `keyword`    | string   | A keyword to filter news articles.                         | `Athens`           |
 | `sortDateBy` | string   | Specifies how to sort the results by date (`asc` or `desc`).| `asc`              |
 | `sortNewsBy` | string   | Specifies how to sort news articles (`relevance`, `popularity`, `publishedAt`).| `publishedAt`     |
