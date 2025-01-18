@@ -12,16 +12,20 @@ namespace ApiAggregator.Services
         private readonly HttpClient _httpClient;
         private readonly string _apiKey;
         private readonly string _baseUrl;
+        private readonly IStatisticsService _statisticsService;
 
-        public APODService(HttpClient httpClient, IConfiguration configuration)
+        public APODService(HttpClient httpClient, IConfiguration configuration, IStatisticsService statisticsService)
         {
             _httpClient = httpClient;
             _baseUrl = configuration["ExternalApis:APODApi:BaseUrl"];
             _apiKey = configuration["ExternalApis:APODApi:ApiKey"];
+            _statisticsService = statisticsService;
         }
 
         public async Task<List<APODModel>> FetchDataAsync(DateOnly startDate, DateOnly endDate)
         {
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew(); // Start stopwatch to measure response time
+
             try
             {
                 var url = $"{_baseUrl}?start_date={startDate:yyyy-MM-dd}&end_date={endDate:yyyy-MM-dd}";
@@ -29,6 +33,11 @@ namespace ApiAggregator.Services
                 _httpClient.DefaultRequestHeaders.Add("x-api-key", _apiKey);
 
                 var response = await _httpClient.GetAsync(url);
+
+                stopwatch.Stop(); // Stop stopwatch after the response is received
+
+                // Record the response time
+                _statisticsService.RecordRequest("APOD", stopwatch.ElapsedMilliseconds);
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -63,11 +72,15 @@ namespace ApiAggregator.Services
             catch (HttpRequestException httpEx)
             {
                 Console.WriteLine($"HTTP request error in FetchDataAsync: {httpEx.Message}");
+                stopwatch.Stop();
+                _statisticsService.RecordRequest("APOD", stopwatch.ElapsedMilliseconds);
                 throw;
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"An error occurred in FetchDataAsync: {ex.Message}");
+                stopwatch.Stop();
+                _statisticsService.RecordRequest("APOD", stopwatch.ElapsedMilliseconds);
                 throw;
             }
         }

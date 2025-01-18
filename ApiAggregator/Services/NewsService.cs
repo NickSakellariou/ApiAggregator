@@ -12,16 +12,19 @@ namespace ApiAggregator.Services
         private readonly HttpClient _httpClient;
         private readonly string _apiKey;
         private readonly string _baseUrl;
-
-        public NewsService(HttpClient httpClient, IConfiguration configuration)
+        private readonly IStatisticsService _statisticsService;
+        public NewsService(HttpClient httpClient, IConfiguration configuration, IStatisticsService statisticsService)
         {
             _httpClient = httpClient;
             _baseUrl = configuration["ExternalApis:NewsApi:BaseUrl"];
             _apiKey = configuration["ExternalApis:NewsApi:ApiKey"];
+            _statisticsService = statisticsService;
         }
 
         public async Task<NewsModel> FetchDataAsync(string keyword, DateOnly startDate, DateOnly endDate, string sortNewsBy)
         {
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew(); // Start stopwatch to measure response time
+
             try
             {
                 var url = $"{_baseUrl}?q={keyword}&from={startDate:yyyy-MM-dd}&to={endDate:yyyy-MM-dd}&sortBy={sortNewsBy}";
@@ -33,6 +36,11 @@ namespace ApiAggregator.Services
 
                 // Make the HTTP request
                 var response = await _httpClient.GetAsync(url);
+
+                stopwatch.Stop(); // Stop stopwatch after the response is received
+
+                // Record the response time
+                _statisticsService.RecordRequest("News", stopwatch.ElapsedMilliseconds);
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -66,11 +74,19 @@ namespace ApiAggregator.Services
             catch (HttpRequestException httpEx)
             {
                 Console.WriteLine($"HTTP request error in FetchDataAsync: {httpEx.Message}");
+                stopwatch.Stop(); // Stop stopwatch after the response is received
+
+                // Record the response time
+                _statisticsService.RecordRequest("News", stopwatch.ElapsedMilliseconds);
                 throw;
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"An error occurred in FetchDataAsync: {ex.Message}");
+                stopwatch.Stop(); // Stop stopwatch after the response is received
+
+                // Record the response time
+                _statisticsService.RecordRequest("News", stopwatch.ElapsedMilliseconds);
                 throw;
             }
         }

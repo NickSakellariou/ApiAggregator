@@ -22,6 +22,10 @@ builder.Services.AddScoped<IAPODService, APODService>();
 builder.Services.AddScoped<INewsService, NewsService>();
 builder.Services.AddScoped<IWeatherService, WeatherService>();
 builder.Services.AddScoped<IAggregationService, AggregationService>();
+builder.Services.AddSingleton<IStatisticsService, StatisticsService>();
+
+
+builder.Services.AddMemoryCache();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>

@@ -12,13 +12,15 @@ namespace ApiAggregator.Services
         private readonly string _apiKey;
         private readonly string _geoUrl;
         private readonly string _baseUrl;
+        private readonly IStatisticsService _statisticsService; // Injected statistics service
 
-        public WeatherService(HttpClient httpClient, IConfiguration configuration)
+        public WeatherService(HttpClient httpClient, IConfiguration configuration, IStatisticsService statisticsService)
         {
             _httpClient = httpClient;
             _geoUrl = configuration["ExternalApis:OpenWeatherMap:GeoUrl"];
             _baseUrl = configuration["ExternalApis:OpenWeatherMap:BaseUrl"];
             _apiKey = configuration["ExternalApis:OpenWeatherMap:ApiKey"];
+            _statisticsService = statisticsService;
         }
 
         public async Task<List<WeatherModel>> FetchDataAsync(string city, DateOnly startDate, DateOnly endDate)
@@ -46,6 +48,7 @@ namespace ApiAggregator.Services
 
         public async Task<GeoLocation> GetLocationAsync(string city)
         {
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew(); // Start stopwatch to measure response time
             try
             {
                 var url = $"{_geoUrl}?q={city}";
@@ -53,6 +56,11 @@ namespace ApiAggregator.Services
                 _httpClient.DefaultRequestHeaders.Add("x-api-key", _apiKey);
 
                 var response = await _httpClient.GetAsync(url);
+
+                stopwatch.Stop(); // Stop stopwatch after the response is received
+
+                // Record the response time
+                _statisticsService.RecordRequest("Weather - Location", stopwatch.ElapsedMilliseconds);
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -78,12 +86,18 @@ namespace ApiAggregator.Services
             {
                 // Log the error
                 Console.WriteLine($"Error in GetLocationAsync: {ex.Message}");
+
+                stopwatch.Stop(); // Stop stopwatch after the response is received
+
+                // Record the response time
+                _statisticsService.RecordRequest("Weather - Location", stopwatch.ElapsedMilliseconds);
                 return null;
             }
         }
 
         public async Task<List<WeatherModel>> FetchWeatherDataAsync(double lat, double lon, DateOnly startDate, DateOnly endDate)
         {
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew(); // Start stopwatch to measure response time
             var weatherData = new List<WeatherModel>();
 
             for (var date = startDate; date <= endDate; date = date.AddDays(1))
@@ -95,6 +109,11 @@ namespace ApiAggregator.Services
                     _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
 
                     var response = await _httpClient.GetAsync(weatherUrl);
+
+                    stopwatch.Stop(); // Stop stopwatch after the response is received
+
+                    // Record the response time for each weather request
+                    _statisticsService.RecordRequest("Weather", stopwatch.ElapsedMilliseconds);
 
                     if (!response.IsSuccessStatusCode)
                     {
@@ -129,6 +148,11 @@ namespace ApiAggregator.Services
                 {
                     // Log the error
                     Console.WriteLine($"Error in FetchWeatherDataAsync for date {date:yyyy-MM-dd}: {ex.Message}");
+
+                    stopwatch.Stop(); // Stop stopwatch after the response is received
+
+                    // Record the response time for each weather request
+                    _statisticsService.RecordRequest("Weather", stopwatch.ElapsedMilliseconds);
                 }
             }
 
