@@ -31,6 +31,8 @@ public class AggregationService : IAggregationService
             var start = InputValidator.ParseAndValidateDate(startDate, nameof(startDate));
             var end = InputValidator.ParseAndValidateDate(endDate, nameof(endDate));
 
+            InputValidator.ValidateDateRange(start, end);
+
             // Validate other inputs
             InputValidator.ValidateInputs(keyword, sortDateBy, sortNewsBy);
 
