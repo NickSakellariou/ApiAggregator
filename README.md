@@ -141,14 +141,6 @@ The API returns a JSON array where each object represents statistics for a speci
         "averageRequests": 0,
         "slowRequests": 1,
         "averageResponseTime": 936
-    },
-    {
-        "apiName": "Cache",
-        "totalRequests": 1,
-        "fastRequests": 1,
-        "averageRequests": 0,
-        "slowRequests": 0,
-        "averageResponseTime": 0
     }
 ]
 ```
