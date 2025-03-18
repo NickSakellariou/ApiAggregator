@@ -1,6 +1,8 @@
+using ApiAggregator.Decorators;
 using ApiAggregator.Interfaces;
 using ApiAggregator.Middleware;
 using ApiAggregator.Services;
+using Microsoft.Extensions.Caching.Distributed;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,7 +12,6 @@ if (builder.Environment.IsDevelopment())
 }
 
 // Add services to the container.
-
 builder.Services.AddControllers();
 
 // Dependency Injection
@@ -21,11 +22,22 @@ builder.Services.AddHttpClient<APODService>();
 builder.Services.AddScoped<IAPODService, APODService>();
 builder.Services.AddScoped<INewsService, NewsService>();
 builder.Services.AddScoped<IWeatherService, WeatherService>();
-builder.Services.AddScoped<IAggregationService, AggregationService>();
+
+// Register the concrete AggregationService.
+builder.Services.AddTransient<AggregationService>();
+
+// Register the caching decorator as the IAggregationService.
+builder.Services.AddTransient<IAggregationService>(sp =>
+    new AggregationServiceCachingDecorator(
+        sp.GetRequiredService<AggregationService>(),
+        sp.GetRequiredService<IDistributedCache>()
+    )
+);
+
 builder.Services.AddSingleton<IStatisticsService, StatisticsService>();
 
-
-builder.Services.AddMemoryCache();
+// Register the distributed cache implementation.
+builder.Services.AddDistributedMemoryCache();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -50,9 +62,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 app.UseAuthorization();
-
 app.MapControllers();
-
 app.Run();
