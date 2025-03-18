@@ -1,30 +1,31 @@
 ﻿using ApiAggregator.Interfaces;
 using ApiAggregator.Models;
+using System.Collections.Concurrent;
 
 namespace ApiAggregator.Services
 {
     public class StatisticsService : IStatisticsService
     {
-        private readonly List<ApiStatistics> _stats = new();
+        private readonly ConcurrentDictionary<string, ApiStatistics> _stats = new();
 
         public void RecordRequest(string apiName, long responseTime)
         {
-            var apiStat = _stats.FirstOrDefault(s => s.ApiName == apiName);
-            if (apiStat == null)
-            {
-                apiStat = new ApiStatistics { ApiName = apiName };
-                _stats.Add(apiStat);
-            }
-            apiStat.TotalRequests++;
-            apiStat.ResponseTimes.Add(responseTime);
+            // Retrieve existing or create a new ApiStatistics record for the given apiName in a thread-safe manner.
+            var apiStat = _stats.GetOrAdd(apiName, key => new ApiStatistics { ApiName = key });
 
-            // Log the recorded statistics
+            // Lock on the specific record to update it safely.
+            lock (apiStat)
+            {
+                apiStat.TotalRequests++;
+                apiStat.ResponseTimes.Add(responseTime);
+            }
+
             Console.WriteLine($"Recorded request for {apiName} with response time: {responseTime}ms");
         }
 
         public List<object> GetStatistics()
         {
-            return _stats.Select(stat => new
+            return _stats.Values.Select(stat => new
             {
                 ApiName = stat.ApiName,
                 TotalRequests = stat.TotalRequests,
