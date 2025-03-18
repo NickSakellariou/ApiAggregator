@@ -36,34 +36,24 @@ public class AggregationService : IAggregationService
             // Validate other inputs
             InputValidator.ValidateInputs(keyword, sortDateBy, sortNewsBy);
 
-            // Fetch data asynchronously from all services
-            var apodTask = Task.Run(async () =>
-            {
-                try { return await _apodService.FetchDataAsync(start, end); }
-                catch { errors.Add("APOD API"); return null; }
-            });
+            // Start the asynchronous operations directly.
+            var apodTask = _apodService.FetchDataAsync(start, end)
+                .ContinueWith(t => t.IsFaulted ? (List<APODModel>)null : t.Result);
+            var newsTask = _newsService.FetchDataAsync(keyword, start, end, sortNewsBy)
+                .ContinueWith(t => t.IsFaulted ? new NewsModel { Articles = new List<NewsModel.Article>() } : t.Result);
+            var weatherTask = _weatherService.FetchDataAsync(keyword, start, end)
+                .ContinueWith(t => t.IsFaulted ? (List<WeatherModel>)null : t.Result);
 
-            var newsTask = Task.Run(async () =>
-            {
-                try { return await _newsService.FetchDataAsync(keyword, start, end, sortNewsBy); }
-                catch { errors.Add("News API"); return null; }
-            });
-
-            var weatherTask = Task.Run(async () =>
-            {
-                try { return await _weatherService.FetchDataAsync(keyword, start, end); }
-                catch { errors.Add("Weather API"); return null; }
-            });
-
+            // Await them all concurrently.
             await Task.WhenAll(apodTask, newsTask, weatherTask);
 
-            // Aggregate results
+            // Now aggregate the results, handling potential nulls.
             var aggregatedResults = AggregateResults(
                 start,
                 end,
-                await apodTask ?? new List<APODModel>(),
-                await newsTask ?? new NewsModel { Articles = new List<NewsModel.Article>() },
-                await weatherTask ?? new List<WeatherModel>(),
+                apodTask.Result ?? new List<APODModel>(),
+                newsTask.Result ?? new NewsModel { Articles = new List<NewsModel.Article>() },
+                weatherTask.Result ?? new List<WeatherModel>(),
                 sortDateBy
             );
 
